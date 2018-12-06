@@ -28,6 +28,7 @@ Begin Window ConnectToServer
    Width           =   481
    Begin AutoDiscovery AutoDiscovery1
       BroadcastAddress=   ""
+      Enabled         =   True
       Handle          =   0
       Index           =   -2147483648
       InitialParent   =   ""
@@ -44,6 +45,7 @@ Begin Window ConnectToServer
       TabPanelIndex   =   0
    End
    Begin Timer Timer1
+      Enabled         =   True
       Index           =   -2147483648
       InitialParent   =   ""
       LockedInPosition=   False
@@ -442,7 +444,7 @@ End
 		      
 		      SQLStatement="SELECT * FROM race"
 		      rs=App.theDB.DBSQLSelect(SQLStatement)
-		      Dynamic.lblRaceName.Text=rs.Field("raceName").StringValue
+		      app.RaceName=rs.Field("raceName").StringValue
 		      
 		      self.Close
 		      StartDialog.Show

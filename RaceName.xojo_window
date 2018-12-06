@@ -217,10 +217,19 @@ End
 
 #tag EndWindowCode
 
+#tag Events tfRaceName
+	#tag Event
+		Sub Open()
+		  me.Text=Dynamic.lblRaceName.Text
+		End Sub
+	#tag EndEvent
+#tag EndEvents
 #tag Events pbOK
 	#tag Event
 		Sub Action()
 		  Dynamic.lblRaceName.Text=tfRaceName.Text
+		  App.theDB.DBSQLExecute("UPDATE race SET raceName = '"+tfRaceName.Text+"'")
+		  app.PrefsWrite
 		  Self.Close
 		  
 		End Sub
@@ -240,6 +249,7 @@ End
 		  
 		  file= GetOpenFolderItem("")
 		  if file<>nil then
+		    app.LogoPath = file.NativePath
 		    Dynamic.Logo=Picture.Open(file)
 		    Dynamic.Refresh
 		  end if

@@ -357,8 +357,8 @@ End
 		  dim f as FolderItem
 		  f=GetOpenFolderItem("")
 		  if f<> nil then
-		    ImportFilePath.text=f.AbsolutePath
-		    Dynamic.ImportFilePath=ImportFilePath.text
+		    ImportFilePath.text=f.Name
+		    Dynamic.ImportFilePath=f.NativePath
 		  end if
 		End Sub
 	#tag EndEvent

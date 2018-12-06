@@ -783,7 +783,7 @@ End
 		Function FileBackupDatabase() As Boolean Handles FileBackupDatabase.Action
 			DIm Result as Boolean
 			
-			Result = BackupDataBase
+			Result = BackupDataBase("Manual")
 			
 			Return True
 			
@@ -800,7 +800,7 @@ End
 
 	#tag MenuHandler
 		Function FileExportTransponderAssignments() As Boolean Handles FileExportTransponderAssignments.Action
-			ExportTransponders
+			ExportTransponders(false, "manual")
 			Return True
 			
 		End Function
@@ -840,9 +840,35 @@ End
 		End Function
 	#tag EndMenuHandler
 
+	#tag MenuHandler
+		Function SpecialDay1EndofDayProcessing() As Boolean Handles SpecialDay1EndofDayProcessing.Action
+			DIm Result as Boolean
+			
+			Result = BackupDataBase("day1")
+			
+			ExportTransponders(False, "day1")
+			
+			Return True
+			
+		End Function
+	#tag EndMenuHandler
+
+	#tag MenuHandler
+		Function SpecialDay2EndofDayProcessing() As Boolean Handles SpecialDay2EndofDayProcessing.Action
+			DIm Result as Boolean
+			
+			Result = BackupDataBase("day2")
+			
+			ExportTransponders(False, "day2")
+			
+			Return True
+			
+		End Function
+	#tag EndMenuHandler
+
 
 	#tag Method, Flags = &h0
-		Function BackupDataBase() As Boolean
+		Function BackupDataBase(BackupDay As String) As Boolean
 		  Dim ExportResult As  Boolean
 		  Dim Result as Integer
 		  
@@ -857,24 +883,27 @@ End
 		  Dim i as Integer
 		  Dim dlg as New SaveAsDialog
 		  Dim f as FolderItem
-		  Dim t as New Date
 		  
-		  Result=MsgBox("Export Transponder Assignments First?",32+3) 'ask to exprt up with Yes, No and Cancel buttons.
-		  
-		  if Result=6 then
-		    ExportTransponders
+		  If BackupDay="manual" Then
+		    Result=MsgBox("Export Transponder Assignments First?",32+3) 'ask to exprt up with Yes, No and Cancel buttons.
+		    
+		    if Result=6 then
+		      ExportTransponders
+		      ExportResult=True
+		    elseif Result=7 Then
+		      ExportResult=True
+		    else
+		      ExportResult=False
+		    end if
+		  Else
 		    ExportResult=True
-		  elseif Result=7 Then
-		    ExportResult=True
-		  else
-		    ExportResult=False
-		  end if
+		  End If
 		  
 		  If ExportResult Then
 		    
 		    dlg.InitialDirectory=SpecialFolder.Documents
 		    dlg.promptText="Backup Data Base"
-		    dlg.SuggestedFileName="Backup "+ReplaceAll(ReplaceAll(ReplaceAll(t.SQLDateTime,":",""),"-","")," ","")
+		    dlg.SuggestedFileName=BackupDay+"backup"
 		    dlg.Title="Backup Data Base"
 		    f=dlg.ShowModal()
 		    
@@ -993,7 +1022,7 @@ End
 	#tag EndMethod
 
 	#tag Method, Flags = &h0
-		Sub ExportTransponders(ScheduledExport As Boolean =  False)
+		Sub ExportTransponders(ScheduledExport As Boolean = False, Optional ExportDay As String = "auto")
 		  Dim file As FolderItem
 		  Dim fileStream As TextOutputStream
 		  Dim Delimiter, FileName, OutputData, SelectStatement as string
@@ -1002,10 +1031,10 @@ End
 		  
 		  if TargetMacOS then
 		    Delimiter=chr(9)
-		    FileName="TX Export.txt"
+		    FileName=ExportDay+"txexport.txt"
 		  else
 		    Delimiter=","
-		    FileName="TX Export.csv"
+		    FileName=ExportDay+"txexport.csv"
 		  end if
 		  
 		  If ScheduledExport Then
@@ -1013,13 +1042,12 @@ End
 		    
 		  Else
 		    file= GetSaveFolderItem("application/text",FileName)
-		    
 		  End If
 		  
 		  
 		  if file<>nil then
 		    
-		    SelectStatement="SELECT transponders.bib, participants.`first`, participants.last, participants.representing, transponders.txcode, transponders.issued"
+		    SelectStatement="SELECT transponders.bib, transponders.txcode, transponders.issued, participants.`first`, participants.last, participants.representing"
 		    SelectStatement=SelectStatement+" FROM transponders LEFT JOIN participants ON transponders.bib = participants.bib"
 		    rsTX=app.theDB.DBSQLSelect(SelectStatement)
 		    
@@ -1032,12 +1060,12 @@ End
 		      
 		      fileStream=file.CreateTextFile
 		      
-		      OutputData= "Bib"+Delimiter
-		      OutputData=OutputData + "TX Code"+Delimiter
-		      OutputData=OutputData + "First Name"+Delimiter
-		      OutputData=OutputData + "Last Name"+Delimiter
-		      OutputData=OutputData + "Representing"+Delimiter
-		      OutputData=OutputData + "Issued"+Delimiter
+		      OutputData= "bib"+Delimiter
+		      OutputData=OutputData + "chipcode"+Delimiter
+		      OutputData=OutputData + "issued"+Delimiter
+		      OutputData=OutputData + "firstname"+Delimiter
+		      OutputData=OutputData + "lastname"+Delimiter
+		      OutputData=OutputData + "representing"+Delimiter
 		      fileStream.WriteLine OutputData
 		      
 		      for i=1 to rsTX.RecordCount
@@ -1069,6 +1097,28 @@ End
 
 	#tag Method, Flags = &h0
 		Sub ImportParticipantData()
+		  Dim SQL As String
+		  Dim d As New MessageDialog
+		  Dim b As MessageDialogButton 
+		  Dim n As Integer       
+		  
+		  If ImportFilePath<>"" Then
+		    SQL = "LOAD DATA INFILE '" + ImportFilePath +"' INTO TABLE participants FIELDS TERMINATED BY ',' ENCLOSED BY '" + Chr(34) + "' LINES TERMINATED BY '\n' (bib, first, last, division, representing) ;"
+		    App.theDB.DBSQLExecute(SQL)
+		    If not(App.theDB.MySQLDB.Error) Then
+		      n = MsgBox("Import Complete", 16)
+		    Else
+		      d.Icon = MessageDialog.GraphicCaution   
+		      d.Message = "Import Failed"
+		      d.Explanation = "(" + str(app.theDB.MySQLDB.ErrorCode) + ") " + app.theDB.MySQLDB.ErrorMessage
+		      b = d.ShowModal
+		    End If
+		  End If
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Sub ImportParticipantDataOld()
 		  Dim f As FolderItem
 		  Dim ValidDate as Boolean
 		  dim ImportStream as TextInputStream
@@ -1357,7 +1407,7 @@ End
 		  Result=MsgBox("Would you like to backup the current data?",32+3) 'ask to back up with Yes, No and Cancel buttons.
 		  
 		  if Result=6 then
-		    BackUpResult=BackupDataBase
+		    BackUpResult=BackupDataBase("newrace")
 		  elseif Result=7 Then
 		    Result=MsgBox("Export Transponder Assignments First?",32+3) 'ask to exprt up with Yes, No and Cancel buttons.
 		    if Result=6 then
@@ -1658,7 +1708,7 @@ End
 		      else
 		        TXAdd("0",RacerNumber,TXCode)
 		        DisplayRacerNumber.text=RacerNumber
-		        RacerName.Text="Transponder Assigned"
+		        RacerName.Text="Chip Assigned"
 		        AgeDivision.text=""
 		        Representing.Text=""
 		      end if
@@ -1952,6 +2002,9 @@ End
 	#tag Event
 		Sub Paint(g As Graphics, areas() As REALbasic.Rect)
 		  Dim x,y as Integer
+		  Dim file As FolderItem
+		  dim pic As  Picture
+		  
 		  
 		  If Logo=Nil Then
 		    Logo=sportstats_logo_minimalist

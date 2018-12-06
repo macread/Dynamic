@@ -20,6 +20,7 @@ Inherits Application
 		  
 		  PrefsRead
 		  
+		  
 		End Sub
 	#tag EndEvent
 
@@ -97,6 +98,12 @@ Inherits Application
 		        if node.ChildCount>0 then
 		          TXWritePath = node.FirstChild.Value
 		        end if
+		        
+		      case "LogoPath"
+		        if node.ChildCount>0 then
+		          LogoPath = node.FirstChild.Value
+		        end if
+		        
 		      end Select
 		      
 		    next
@@ -108,7 +115,7 @@ Inherits Application
 	#tag Method, Flags = &h0
 		Sub PrefsWrite()
 		  Dim xml as XmlDocument
-		  Dim root, UserNamePathNode, PasswordPathNode, TXWriteTimePathNode, TXWritePathPathNode as XMLNode
+		  Dim root, UserNamePathNode, PasswordPathNode, TXWriteTimePathNode, TXWritePathPathNode, LogoPathNode as XMLNode
 		  Dim f as FolderItem
 		  f=SpecialFolder.Preferences.Child("dynamic.plist")
 		  
@@ -116,13 +123,13 @@ Inherits Application
 		  root = xml.AppendChild(xml.CreateElement("root"))
 		  
 		  UserNamePathNode = root.AppendChild(xml.CreateElement("UserName"))
-		  UserNamePathNode.AppendChild(xml.CreateTextNode(UserName))
+		  UserNamePathNode.AppendChild(xml.CreateTextNode(app.UserName))
 		  
 		  PasswordPathNode = root.AppendChild(xml.CreateElement("Password"))
-		  PasswordPathNode.AppendChild(xml.CreateTextNode(EncodeBase64(Password,0)))
+		  PasswordPathNode.AppendChild(xml.CreateTextNode(EncodeBase64(app.Password,0)))
 		  
 		  TXWriteTimePathNode = root.AppendChild(xml.CreateElement("TXWriteTime"))
-		  TXWriteTimePathNode.AppendChild(xml.CreateTextNode(Str(TxWriteTime)))
+		  TXWriteTimePathNode.AppendChild(xml.CreateTextNode(Str(app.TxWriteTime)))
 		  
 		  If TxWriteTime > 0 Then
 		    Dynamic.TXExportTimer.Period=TxWriteTime * 60000
@@ -132,7 +139,10 @@ Inherits Application
 		  End If
 		  
 		  TXWritePathPathNode = root.AppendChild(xml.CreateElement("TXWritePath"))
-		  TXWritePathPathNode.AppendChild(xml.CreateTextNode(TXWritePath))
+		  TXWritePathPathNode.AppendChild(xml.CreateTextNode(app.TXWritePath))
+		  
+		  LogoPathNode = root.AppendChild(xml.CreateElement("LogoPath"))
+		  LogoPathNode.AppendChild(xml.CreateTextNode(app.LogoPath))
 		  
 		  xml.SaveXml(f)
 		  
@@ -157,7 +167,15 @@ Inherits Application
 	#tag EndProperty
 
 	#tag Property, Flags = &h0
+		LogoPath As String
+	#tag EndProperty
+
+	#tag Property, Flags = &h0
 		Password As String
+	#tag EndProperty
+
+	#tag Property, Flags = &h0
+		RaceName As String
 	#tag EndProperty
 
 	#tag Property, Flags = &h0
@@ -208,7 +226,7 @@ Inherits Application
 		#tag ViewProperty
 			Name="ReaderType"
 			Group="Behavior"
-			InitialValue="""iPico"""
+			InitialValue="iPico"
 			Type="String"
 			EditorType="MultiLineEditor"
 		#tag EndViewProperty
@@ -253,6 +271,18 @@ Inherits Application
 		#tag EndViewProperty
 		#tag ViewProperty
 			Name="TXWritePath"
+			Group="Behavior"
+			Type="String"
+			EditorType="MultiLineEditor"
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="LogoPath"
+			Group="Behavior"
+			Type="String"
+			EditorType="MultiLineEditor"
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="RaceName"
 			Group="Behavior"
 			Type="String"
 			EditorType="MultiLineEditor"

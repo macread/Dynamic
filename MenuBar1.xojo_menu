@@ -200,5 +200,33 @@ Begin Menu MenuBar1
          Visible = True
       End
    End
+   Begin MenuItem SpecialMenu
+      SpecialMenu = 0
+      Text = "Special"
+      Index = -2147483648
+      AutoEnable = True
+      Visible = True
+      Begin MenuItem SpecialDay1EndofDayProcessing
+         SpecialMenu = 0
+         Text = "Day 1 End of Day Processing"
+         Index = -2147483648
+         AutoEnable = True
+         Visible = True
+      End
+      Begin MenuItem UntitledSeparator4
+         SpecialMenu = 0
+         Text = "-"
+         Index = -2147483648
+         AutoEnable = True
+         Visible = True
+      End
+      Begin MenuItem SpecialDay2EndofDayProcessing
+         SpecialMenu = 0
+         Text = "Day 2 End of Day Processing"
+         Index = -2147483648
+         AutoEnable = True
+         Visible = True
+      End
+   End
 End
 #tag EndMenu
